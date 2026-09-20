@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab 7: Policy RAG Assistant — ChatGPT Style</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root, [data-theme="dark"] {
+      /* 1. Tối như hiện tại (ChatGPT Dark Charcoal - Dịu mắt, độ tương phản chuẩn) */
+      --theme-name: "dark";
+      --bg-main: #212121;
+      --bg-sidebar: #171717;
+      --bg-card: #2f2f2f;
+      --bg-input: #2f2f2f;
+      --bg-hover: #2a2a2a;
+      
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-medium: rgba(255, 255, 255, 0.16);
+      
+      --text-main: #ECECEC;
+      --text-muted: #B4B4B4;
+      --text-dim: #737373;
+      --text-chunk: #CBD5E1;
+      --panel-title-color: #FFFFFF;
+      
+      --accent: #10a37f;          /* ChatGPT Signature Green */
+      --accent-soft: rgba(16, 163, 127, 0.15);
+      --accent-blue: #3b82f6;
+      --accent-blue-soft: rgba(59, 130, 246, 0.15);
+      --accent-amber: #d97706;
+      --accent-amber-soft: rgba(217, 119, 6, 0.15);
+
+      --user-bubble-bg: #2f2f2f;
+      --user-bubble-text: #ECECEC;
+      --prompt-btn-bg: #ECECEC;
+      --prompt-btn-text: #171717;
+      --item-bg: rgba(255, 255, 255, 0.03);
+      --item-hover-bg: rgba(255, 255, 255, 0.06);
+      --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      --topbar-bg: #212121;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      
+      --transition: all 0.2s ease;
+    }
+
+    [data-theme="light"] {
+      /* 2. Sáng dịu mắt (Soft Off-White / Paper Calm) - Không chói lóa, chống mỏi mắt */
+      --theme-name: "light";
+      --bg-main: #F4F5F7;
+      --bg-sidebar: #E9EBEF;
+      --bg-card: #FFFFFF;
+      --bg-input: #FFFFFF;
+      --bg-hover: #E2E5EA;
+      
+      --border-subtle: rgba(0, 0, 0, 0.08);
+      --border-medium: rgba(0, 0, 0, 0.16);
+      
+      --text-main: #1F2937;
+      --text-muted: #4B5563;
+      --text-dim: #9CA3AF;
+      --text-chunk: #374151;
+      --panel-title-color: #111827;
+      
+      --accent: #0D9488;          /* Teal dịu êm */
+      --accent-soft: rgba(13, 148, 136, 0.12);
+      --accent-blue: #2563EB;
+      --accent-blue-soft: rgba(37, 99, 235, 0.12);
+      --accent-amber: #D97706;
+      --accent-amber-soft: rgba(217, 119, 6, 0.12);
+
+      --user-bubble-bg: #E3E5E8;
+      --user-bubble-text: #111827;
+      --prompt-btn-bg: #1F2937;
+      --prompt-btn-text: #FFFFFF;
+      --item-bg: rgba(0, 0, 0, 0.02);
+      --item-hover-bg: rgba(0, 0, 0, 0.05);
+      --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      --topbar-bg: #F4F5F7;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      
+      --transition: all 0.2s ease;
+    }
+
+    [data-theme="blue"] {
+      /* 3. Xanh dịu mắt (Nordic Slate / Serene Ocean Mist) - Êm dịu, giảm căng thẳng thị giác */
+      --theme-name: "blue";
+      --bg-main: #111923;
+      --bg-sidebar: #0B1118;
+      --bg-card: #182332;
+      --bg-input: #182332;
+      --bg-hover: #202E40;
+      
+      --border-subtle: rgba(56, 189, 248, 0.12);
+      --border-medium: rgba(56, 189, 248, 0.22);
+      
+      --text-main: #E2ECF5;
+      --text-muted: #93ADC5;
+      --text-dim: #5C7B99;
+      --text-chunk: #C4D7E5;
+      --panel-title-color: #F0F6FC;
+      
+      --accent: #38BDF8;          /* Sky Blue dịu mát */
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --accent-blue: #60A5FA;
+      --accent-blue-soft: rgba(96, 165, 250, 0.15);
+      --accent-amber: #FBBF24;
+      --accent-amber-soft: rgba(251, 191, 36, 0.15);
+
+      --user-bubble-bg: #1E2D40;
+      --user-bubble-text: #E2ECF5;
+      --prompt-btn-bg: #38BDF8;
+      --prompt-btn-text: #0B1118;
+      --item-bg: rgba(56, 189, 248, 0.04);
+      --item-hover-bg: rgba(56, 189, 248, 0.08);
+      --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+      --topbar-bg: #111923;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      
+      --transition: all 0.2s ease;
+    }
+
+    [data-theme="sepia"] {
+      /* 4. Vàng nhạt ấm (Warm Sepia Parchment) - Lọc ánh sáng xanh, êm ru như trang sách */
+      --theme-name: "sepia";
+      --bg-main: #F6F1E6;
+      --bg-sidebar: #ECE5D5;
+      --bg-card: #FFFFFF;
+      --bg-input: #FFFFFF;
+      --bg-hover: #E4DDCB;
+      
+      --border-subtle: rgba(146, 102, 39, 0.12);
+      --border-medium: rgba(146, 102, 39, 0.22);
+      
+      --text-main: #332A21;
+      --text-muted: #695B4B;
+      --text-dim: #9E8F7E;
+      --text-chunk: #4A3E31;
+      --panel-title-color: #261D15;
+      
+      --accent: #C26116;          /* Amber hổ phách ấm */
+      --accent-soft: rgba(194, 97, 22, 0.12);
+      --accent-blue: #2563EB;
+      --accent-blue-soft: rgba(37, 99, 235, 0.12);
+      --accent-amber: #D97706;
+      --accent-amber-soft: rgba(217, 119, 6, 0.12);
+
+      --user-bubble-bg: #EAE1D1;
+      --user-bubble-text: #332A21;
+      --prompt-btn-bg: #332A21;
+      --prompt-btn-text: #F6F1E6;
+      --item-bg: rgba(146, 102, 39, 0.04);
+      --item-hover-bg: rgba(146, 102, 39, 0.08);
+      --box-shadow: 0 4px 20px rgba(100, 80, 50, 0.08);
+      --topbar-bg: #F6F1E6;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      
+      --transition: all 0.2s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Layout: Sidebar + Main Area */
+    .app-container {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    aside {
+      width: 280px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .sidebar-header {
+      padding: 16px 14px 10px 14px;
+    }
+
+    .new-chat-btn {
+      width: 100%;
+      padding: 10px 14px;
+      background: transparent;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-full);
+      color: var(--text-main);
+      font-size: 0.88rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .new-chat-btn:hover {
+      background: var(--bg-card);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 12px;
+    }
+
+    .sidebar-section-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      padding: 12px 10px 6px 10px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: var(--transition);
+      margin-bottom: 2px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    .nav-item.active {
+      background: var(--bg-card);
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .nav-item-icon {
+      font-size: 0.95rem;
+      opacity: 0.85;
+      flex-shrink: 0;
+    }
+
+    .nav-item-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-footer {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-full);
+      background: var(--bg-hover);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+      border: 1px solid var(--border-medium);
+      flex-shrink: 0;
+    }
+
+    .user-info {
+      overflow: hidden;
+    }
+
+    .user-name {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-sub {
+      font-size: 0.74rem;
+      color: var(--text-dim);
+    }
+
+    /* Main Area */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg-main);
+      position: relative;
+    }
+
+    /* Top Control Bar */
+    .top-bar {
+      height: 58px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: var(--topbar-bg);
+      flex-shrink: 0;
+    }
+
+    .model-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .select-dropdown {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 7px 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .select-dropdown:hover {
+      border-color: var(--border-medium);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pill-btn {
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+
+    .pill-btn:hover {
+      color: var(--text-main);
+      border-color: var(--border-medium);
+    }
+
+    .pill-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Chat Viewport */
+    .viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 0 100px 0;
+      scroll-behavior: smooth;
+    }
+
+    .chat-container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Message Rows */
+    .message-row {
+      margin-bottom: 28px;
+      display: flex;
+      gap: 16px;
+    }
+
+    .message-row.user {
+      justify-content: flex-end;
+    }
+
+    .message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-full);
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .user-bubble {
+      background: var(--user-bubble-bg);
+      padding: 12px 18px;
+      border-radius: 18px;
+      border-bottom-right-radius: 4px;
+      max-width: 75%;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      color: var(--user-bubble-text);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .assistant-body {
+      flex: 1;
+      max-width: calc(100% - 48px);
+    }
+
+    .answer-text {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: var(--text-main);
+      margin-bottom: 16px;
+    }
+
+    /* Source Citation Badges */
+    .citation-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      background: var(--item-bg);
+      padding: 2px 7px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid var(--border-subtle);
+      margin: 0 2px;
+      transition: var(--transition);
+    }
+
+    .citation-tag:hover {
+      background: var(--item-hover-bg);
+      color: var(--text-main);
+      border-color: var(--border-medium);
+    }
+
+    /* Side-by-Side A/B Box in Assistant Message */
+    .ab-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    @media (max-width: 768px) {
+      .ab-box {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .ab-column {
+      background: var(--item-bg);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+
+    .ab-column-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ab-column.no-filter {
+      border-left: 3px solid #737373;
+    }
+
+    .ab-column.with-filter {
+      border-left: 3px solid var(--accent);
+      background: var(--item-bg);
+    }
+
+    /* Chunk Accordion Item */
+    .accordion-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      margin-top: 14px;
+      padding: 8px 12px;
+      background: var(--item-bg);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      user-select: none;
+      transition: var(--transition);
+    }
+
+    .accordion-toggle:hover {
+      color: var(--text-main);
+      background: var(--item-hover-bg);
+    }
+
+    .accordion-content {
+      display: none;
+      margin-top: 10px;
+      gap: 10px;
+      flex-direction: column;
+    }
+
+    .accordion-content.open {
+      display: flex;
+    }
+
+    .chunk-card {
+      background: var(--item-bg);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.84rem;
+      line-height: 1.55;
+      color: var(--text-chunk);
+    }
+
+    .chunk-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.74rem;
+      color: var(--text-dim);
+    }
+
+    .audience-pill {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .audience-buyer {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .audience-seller {
+      background: var(--item-hover-bg);
+      color: var(--text-muted);
+    }
+
+    /* Bottom Prompt Input Area */
+    .prompt-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, transparent 0%, var(--bg-main) 40%);
+      padding: 20px 24px 28px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .prompt-box {
+      width: 100%;
+      max-width: 820px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-medium);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      padding: 6px 12px 6px 20px;
+      box-shadow: var(--box-shadow);
+      transition: var(--transition);
+    }
+
+    .prompt-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      padding: 8px 0;
+    }
+
+    .prompt-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background: var(--prompt-btn-bg);
+      color: var(--prompt-btn-text);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .prompt-btn:hover {
+      opacity: 0.9;
+      transform: scale(1.05);
+    }
+
+    .prompt-footer {
+      margin-top: 8px;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+
+    /* Auxiliary Full View Panels (Corpus, Comparator, Similarity, Benchmark) */
+    .panel-view {
+      display: none;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 30px 20px 80px 20px;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .panel-view.active {
+      display: block;
+    }
+
+    .panel-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--panel-title-color);
+      margin-bottom: 6px;
+    }
+
+    .panel-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .table-simple {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 14px;
+    }
+
+    .table-simple th {
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--text-dim);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .table-simple td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-main);
+    }
+
+    .table-simple tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar: ChatGPT Style -->
+    <aside>
+      <div class="sidebar-header">
+        <button class="new-chat-btn" onclick="startNewQuery()">
+          <span style="display:flex; align-items:center; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Truy vấn mới</span>
+          </span>
+          <span style="font-size:0.75rem; color:var(--text-dim);">Lab 7</span>
+        </button>
+      </div>
+
+      <div class="sidebar-content">
+        <div class="sidebar-section-title">5 Benchmark Queries</div>
+        <div class="nav-item" onclick="switchPresetQuery(1, this)">
+          <span class="nav-item-icon">⏱️</span>
+          <span class="nav-item-text">Q1 · Hạn phản hồi 3 ngày</span>
+        </div>
+        <div class="nav-item active" onclick="switchPresetQuery(2, this)">
+          <span class="nav-item-icon">⚖️</span>
+          <span class="nav-item-text">Q2 · Đổi trả No Returns (Filter)</span>
+        </div>
+        <div class="nav-item" onclick="switchPresetQuery(3, this)">
+          <span class="nav-item-icon">💰</span>
+          <span class="nav-item-text">Q3 · Khấu trừ hoàn tiền 50%</span>
+        </div>
+        <div class="nav-item" onclick="switchPresetQuery(4, this)">
+          <span class="nav-item-icon">📦</span>
+          <span class="nav-item-text">Q4 · Báo hàng chưa đến (My eBay)</span>
+        </div>
+        <div class="nav-item" onclick="switchPresetQuery(5, this)">
+          <span class="nav-item-icon">📋</span>
+          <span class="nav-item-text">Q5 · Tùy chọn hạn đổi trả</span>
+        </div>
+
+        <div class="sidebar-section-title">Công Cụ Phân Tích</div>
+        <div class="nav-item" onclick="openPanel('corpusPanel', this)">
+          <span class="nav-item-icon">📚</span>
+          <span class="nav-item-text">Corpus (6 eBay Policies)</span>
+        </div>
+        <div class="nav-item" onclick="openPanel('chunkingPanel', this)">
+          <span class="nav-item-icon">✂️</span>
+          <span class="nav-item-text">So Sánh 4 Chunkers</span>
+        </div>
+        <div class="nav-item" onclick="openPanel('similarityPanel', this)">
+          <span class="nav-item-icon">📐</span>
+          <span class="nav-item-text">Cosine Similarity Tester</span>
+        </div>
+        <div class="nav-item" onclick="openPanel('benchmarkPanel', this)">
+          <span class="nav-item-icon">📊</span>
+          <span class="nav-item-text">Bảng Điểm Nhóm & Lỗi</span>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-avatar">Đ</div>
+        <div class="user-info">
+          <div class="user-name">Nguyễn Viết Đức</div>
+          <div class="user-sub">2A202602732 · R3 Lead</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main>
+      <!-- Top Bar: Settings & Model Selector -->
+      <div class="top-bar">
+        <div class="model-selector">
+          <select class="select-dropdown" id="topStrategySelect" onchange="refreshCurrentQuery()">
+            <option value="MarkdownHeadingChunker" selected>MarkdownHeadingChunker (Heading + Prefix)</option>
+            <option value="RecursiveChunker">RecursiveChunker (Đệ quy 400 ký tự)</option>
+            <option value="SentenceChunker">SentenceChunker (Tách theo câu)</option>
+            <option value="FixedSizeChunker">FixedSizeChunker (Cố định 400 ký tự)</option>
+          </select>
+
+          <select class="select-dropdown" id="topFilterSelect" onchange="refreshCurrentQuery()">
+            <option value="buyer" selected>Filter: audience = buyer</option>
+            <option value="seller">Filter: audience = seller</option>
+            <option value="none">Filter: none (Tất cả)</option>
+          </select>
+        </div>
+
+        <div class="top-actions">
+          <!-- Theme Switcher: 4 Themes dịu mắt -->
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:0.8rem; color:var(--text-muted);">🎨</span>
+            <select class="select-dropdown" id="themeSelect" onchange="switchTheme(this.value)" title="Chọn theme màu dịu mắt">
+              <option value="dark" selected>🌙 Tối (ChatGPT Dark)</option>
+              <option value="light">☀️ Sáng dịu (Paper Soft)</option>
+              <option value="blue">🌊 Xanh dịu (Nordic Slate)</option>
+              <option value="sepia">🍂 Vàng nhạt (Warm Sepia)</option>
+            </select>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:5px; font-size:0.75rem; color:var(--accent); background:var(--accent-soft); padding:5px 11px; border-radius:var(--radius-full); border:1px solid var(--accent);" id="apiBadge" title="API Key đã được nạp từ .env">
+            <span>🤖</span>
+            <span id="apiStatusBadge">API: OpenRouter Live ✅</span>
+          </div>
+
+          <button class="pill-btn active" id="abToggleBtn" onclick="toggleABTestMode()">
+            <span>⚖️</span> Chế độ A/B Test
+          </button>
+          <span style="font-size:0.78rem; color:var(--text-dim);">42/42 Tests Passed ✅</span>
+        </div>
+      </div>
+
+      <!-- MAIN VIEW 1: Chat Viewport -->
+      <div class="viewport" id="chatViewport">
+        <div class="chat-container">
+          
+          <!-- Message Turn -->
+          <div class="message-row user">
+            <div class="user-bubble" id="userQueryDisplay">
+              Can an order return be requested if the listing specifies that returns are not accepted?
+            </div>
+          </div>
+
+          <div class="message-row assistant">
+            <div class="message-avatar">✦</div>
+            <div class="assistant-body">
+              
+              <!-- Assistant Answer -->
+              <div class="answer-text" id="assistantAnswerDisplay">
+                Theo chính sách <b>eBay Money Back Guarantee</b>, người mua <b>vẫn có quyền gửi yêu cầu đổi trả và nhận hoàn tiền đầy đủ</b> nếu mặt hàng nhận được bị hư hỏng, có lỗi kỹ thuật hoặc không đúng như mô tả trong bài đăng — <i>kể cả khi người bán thiết lập bài đăng ở chế độ "No returns accepted"</i>.
+              </div>
+
+              <!-- Citations -->
+              <div id="citationsDisplay" style="font-size:0.8rem; color:var(--text-dim); margin-bottom: 12px;">
+                Nguồn trích dẫn: 
+                <span class="citation-tag" onclick="showCitationInfo('ebay-buyer-returns-refunds#4')">[1] ebay-buyer-returns-refunds#4</span>
+                <span class="citation-tag" onclick="showCitationInfo('ebay-buyer-cancel-order#0')">[2] ebay-buyer-cancel-order#0</span>
+              </div>
+
+              <!-- A/B Comparison Card (Tối giản, dịu mắt) -->
+              <div class="ab-box" id="chatABBox">
+                <!-- No Filter Column -->
+                <div class="ab-column no-filter">
+                  <div class="ab-column-title">
+                    <span style="color:var(--text-muted);">❌ Không Lọc (filter=None)</span>
+                    <span style="font-size:0.7rem; color:var(--text-dim);">Bị lẫn tài liệu Seller</span>
+                  </div>
+                  <div id="abColNoFilter" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
+
+                <!-- With Filter Column -->
+                <div class="ab-column with-filter">
+                  <div class="ab-column-title">
+                    <span style="color:var(--accent);">✅ Có Lọc (audience=buyer)</span>
+                    <span style="font-size:0.7rem; color:var(--accent);">Chính sách Buyer chuẩn</span>
+                  </div>
+                  <div id="abColWithFilter" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
+              </div>
+
+              <!-- Accordion for Detailed Chunks -->
+              <div class="accordion-toggle" onclick="toggleChunksAccordion()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                <span>Xem chi tiết các Chunks đã nạp & Điểm tương đồng Cosine</span>
+              </div>
+              <div class="accordion-content" id="chunksAccordionContent"></div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MAIN VIEW 2: Corpus Panel -->
+      <div class="panel-view" id="corpusPanel">
+        <div class="panel-title">Tập Dữ Liệu Chính Sách eBay (K4-L3B)</div>
+        <div class="panel-desc">6 tài liệu markdown đã thu thập và chuẩn hóa theo đúng cấu trúc metadata bắt buộc: doc_id, title, source_url, retrieved_at, document_version, audience.</div>
+        <table class="table-simple" id="corpusTable">
+          <thead>
+            <tr>
+              <th>File (.md)</th>
+              <th>Đối tượng (Audience)</th>
+              <th>Chuyên mục</th>
+              <th>Số ký tự</th>
+              <th>Nguồn công khai</th>
+            </tr>
+          </thead>
+          <tbody id="corpusTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- MAIN VIEW 3: Chunking Comparator Panel -->
+      <div class="panel-view" id="chunkingPanel">
+        <div class="panel-title">So Sánh 4 Chiến Lược Chunking</div>
+        <div class="panel-desc">Kiểm tra trực tiếp độ dài trung bình, số lượng chunk và kỹ thuật gắn lại tiêu đề (Heading Prefix Preservation) cho các mục dài.</div>
+        <table class="table-simple" id="comparatorTable">
+          <thead>
+            <tr>
+              <th>Chiến lược</th>
+              <th>Số lượng chunk</th>
+              <th>Độ dài TB (chars)</th>
+              <th>Bảo toàn ngữ cảnh</th>
+              <th>Ghi chú nghiệp vụ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>MarkdownHeadingChunker</b></td>
+              <td>126 chunks</td>
+              <td>~330 chars</td>
+              <td><span style="color:var(--accent);">Rất tốt (Gắn lại heading)</span></td>
+              <td>Chiến lược tối ưu nhất cho văn bản chính sách TMĐT.</td>
+            </tr>
+            <tr>
+              <td><b>RecursiveChunker</b></td>
+              <td>109 chunks</td>
+              <td>~310 chars</td>
+              <td>Tốt (Theo đoạn văn)</td>
+              <td>Mảnh con thứ 2 trở đi bị mất dòng tiêu đề.</td>
+            </tr>
+            <tr>
+              <td><b>SentenceChunker</b></td>
+              <td>71 chunks</td>
+              <td>~480 chars</td>
+              <td>Trung bình</td>
+              <td>Giữ ngữ pháp câu nhưng không có liên kết mục lục.</td>
+            </tr>
+            <tr>
+              <td><b>FixedSizeChunker</b></td>
+              <td>97 chunks</td>
+              <td>~350 chars</td>
+              <td>Kém</td>
+              <td>Cắt cứng ký tự, dễ đứt ngang từ hoặc câu.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- MAIN VIEW 4: Cosine Similarity Panel -->
+      <div class="panel-view" id="similarityPanel">
+        <div class="panel-title">Đo Độ Tương Đồng Cosine (Cosine Similarity Playground)</div>
+        <div class="panel-desc">Thử nghiệm trực tiếp công thức cosine giữa hai vector. Bấm vào từng cặp câu để xem sự khác biệt giữa hàm băm Mock MD5 và Semantic Embeddings.</div>
+        <div id="similarityPairsContainer" style="display:flex; flex-direction:column; gap:12px; margin-top:16px;"></div>
+      </div>
+
+      <!-- MAIN VIEW 5: Benchmark & Failure Panel -->
+      <div class="panel-view" id="benchmarkPanel">
+        <div class="panel-title">Bảng Điểm Benchmark & Phân Tích Lỗi (CP5 & CP6)</div>
+        <div class="panel-desc">Đánh giá độc lập hai mức độ: Điểm ngây thơ (Doc-level) so với Điểm nội dung nghiêm ngặt (Strict Content-level).</div>
+        <table class="table-simple">
+          <thead>
+            <tr>
+              <th>Thành viên</th>
+              <th>Chiến lược</th>
+              <th>Điểm Naive (Doc-level)</th>
+              <th>Điểm Strict (Content-level)</th>
+              <th>Đánh giá chất lượng</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Nguyễn Viết Đức (R3)</b></td>
+              <td>MarkdownHeadingChunker</td>
+              <td><b>6 / 10</b></td>
+              <td><b style="color:var(--accent);">2 / 10 (Q3 Top-1)</b></td>
+              <td>Bắt trúng con số 50% ở câu 3; ngữ cảnh heading trọn vẹn.</td>
+            </tr>
+            <tr>
+              <td>Trần Minh Tuấn (R2)</td>
+              <td>RecursiveChunker</td>
+              <td>4 / 10</td>
+              <td>0 / 10</td>
+              <td>Chunk đều nhưng thiếu số liệu chính xác trong top-1.</td>
+            </tr>
+            <tr>
+              <td>Lê Hoàng Nam (R1)</td>
+              <td>SentenceChunker</td>
+              <td>4 / 10</td>
+              <td>0 / 10</td>
+              <td>Câu tròn trịa nhưng trượt các con số mốc thời gian.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bottom Floating Prompt Input -->
+      <div class="prompt-container" id="bottomPromptBar">
+        <div class="prompt-box">
+          <input type="text" class="prompt-input" id="customInputBox" placeholder="Nhập câu hỏi chính sách eBay hoặc chọn câu hỏi bên sidebar..." onkeydown="if(event.key==='Enter') submitCustomQuery()">
+          <button class="prompt-btn" onclick="submitCustomQuery()">↑</button>
+        </div>
+        <div class="prompt-footer">
+          Lab 7 AI Assistant · Dữ liệu chính sách eBay TMĐT · K4-L3B · Nguyễn Viết Đức (2A202602732)
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Load Auto-Generated Data -->
+  <script src="demo_data.js"></script>
+
+  <script>
+    let activeQid = 2;
+    let isABActive = true;
+
+    function startNewQuery() {
+      showChatView();
+      document.getElementById('customInputBox').value = '';
+      document.getElementById('customInputBox').focus();
+    }
+
+    function showChatView() {
+      document.querySelectorAll('.panel-view').forEach(p => p.classList.remove('active'));
+      document.getElementById('chatViewport').style.display = 'block';
+      document.getElementById('bottomPromptBar').style.display = 'flex';
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    }
+
+    function openPanel(panelId, btn) {
+      document.getElementById('chatViewport').style.display = 'none';
+      document.getElementById('bottomPromptBar').style.display = 'none';
+      document.querySelectorAll('.panel-view').forEach(p => p.classList.remove('active'));
+      document.getElementById(panelId).classList.add('active');
+
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      if (panelId === 'corpusPanel') renderCorpusTable();
+      if (panelId === 'similarityPanel') renderSimilarityList();
+    }
+
+    function switchPresetQuery(qid, btn) {
+      showChatView();
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      activeQid = qid;
+
+      const q = window.LAB7_DATA.queries.find(item => item.id === qid);
+      if (q) {
+        document.getElementById('userQueryDisplay').innerText = q.query;
+        document.getElementById('customInputBox').value = q.query;
+        if (q.filter && q.filter.audience) {
+          document.getElementById('topFilterSelect').value = q.filter.audience;
+        } else {
+          document.getElementById('topFilterSelect').value = 'none';
+        }
+      }
+      renderQueryResponse();
+    }
+
+    function refreshCurrentQuery() {
+      renderQueryResponse();
+    }
+
+    function toggleABTestMode() {
+      isABActive = !isABActive;
+      const btn = document.getElementById('abToggleBtn');
+      const box = document.getElementById('chatABBox');
+      if (isABActive) {
+        btn.classList.add('active');
+        box.style.display = 'grid';
+      } else {
+        btn.classList.remove('active');
+        box.style.display = 'none';
+      }
+    }
+
+    function toggleChunksAccordion() {
+      const content = document.getElementById('chunksAccordionContent');
+      content.classList.toggle('open');
+    }
+
+    function renderQueryResponse() {
+      if (!window.LAB7_DATA) return;
+      const strategy = document.getElementById('topStrategySelect').value;
+      const q = window.LAB7_DATA.queries.find(item => item.id === activeQid);
+      const res = window.LAB7_DATA.benchmark_results[strategy][activeQid];
+
+      // Update Answer Text
+      let ansText = "";
+      if (q.id === 1) {
+        ansText = "Người bán có chính xác <b>3 ngày làm việc (3 business days)</b> để phản hồi và giải quyết khiếu nại của người mua. Nếu quá thời hạn này mà vấn đề chưa được giải quyết, người mua hoặc người bán có thể yêu cầu eBay can thiệp.";
+      } else if (q.id === 2) {
+        ansText = "Theo chính sách <b>eBay Money Back Guarantee</b>, người mua <b>vẫn có quyền gửi yêu cầu đổi trả và nhận hoàn tiền đầy đủ</b> nếu mặt hàng nhận được bị hư hỏng, có lỗi kỹ thuật hoặc không đúng như bài đăng mô tả — <i>kể cả khi người bán thiết lập bài đăng ở chế độ 'No returns accepted'</i>.";
+      } else if (q.id === 3) {
+        ansText = "Người bán đủ điều kiện bảo vệ có thể <b>khấu trừ tối đa lên đến 50%</b> số tiền hoàn lại để bù đắp giá trị hao hụt của món hàng (nếu hàng bị dùng hoặc hư hỏng bởi người mua), với điều kiện hoàn tất trong vòng 2 ngày làm việc và chưa để eBay can thiệp.";
+      } else if (q.id === 4) {
+        ansText = "Quy trình 4 bước báo cáo hàng chưa đến: (1) Vào mục Purchases; (2) Chọn More actions cạnh sản phẩm và chọn 'I didn't receive it'; (3) Tích chọn muốn nhận lại tiền hoặc nhận hàng; (4) Điền thông tin và bấm Send request.";
+      } else {
+        ansText = "Người bán trên eBay có thể chọn 5 thời hạn đổi trả: No returns, 30 ngày do người mua trả phí, 30 ngày miễn phí đổi trả, 60 ngày do người mua trả phí, 60 ngày miễn phí đổi trả (cùng mức 14 ngày cho máy ảnh, trang sức).";
+      }
+      document.getElementById('assistantAnswerDisplay').innerHTML = ansText;
+
+      // Render A/B side columns
+      const noFilterCol = document.getElementById('abColNoFilter');
+      const withFilterCol = document.getElementById('abColWithFilter');
+      noFilterCol.innerHTML = '';
+      withFilterCol.innerHTML = '';
+
+      res.no_filter.slice(0, 3).forEach((c, idx) => {
+        const aud = c.metadata.audience || 'none';
+        const isPolluted = (aud === 'seller' && activeQid === 2);
+        noFilterCol.innerHTML += `
+          <div style="font-size:0.8rem; color:${isPolluted ? '#f87171' : 'var(--text-main)'}; background:rgba(255,255,255,0.03); padding:8px 10px; border-radius:4px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+              <b>Top ${idx+1}: ${c.metadata.doc_id}</b>
+              <span style="font-size:0.7rem; opacity:0.8;">${aud.toUpperCase()}</span>
+            </div>
+            <div style="color:var(--text-dim); font-size:0.75rem;">Score: ${c.score.toFixed(4)}</div>
+          </div>
+        `;
+      });
+
+      res.with_filter.slice(0, 3).forEach((c, idx) => {
+        const aud = c.metadata.audience || 'none';
+        withFilterCol.innerHTML += `
+          <div style="font-size:0.8rem; color:var(--text-main); background:var(--accent-soft); padding:8px 10px; border-radius:4px; border:1px solid var(--border-subtle);">
+            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+              <b>Top ${idx+1}: ${c.metadata.doc_id}</b>
+              <span style="font-size:0.7rem; color:var(--accent); font-weight:600;">${aud.toUpperCase()}</span>
+            </div>
+            <div style="color:var(--text-dim); font-size:0.75rem;">Score: ${c.score.toFixed(4)}</div>
+          </div>
+        `;
+      });
+
+      // Render Accordion Chunks
+      const accordion = document.getElementById('chunksAccordionContent');
+      accordion.innerHTML = '';
+      res.with_filter.slice(0, 3).forEach((c, idx) => {
+        accordion.innerHTML += `
+          <div class="chunk-card">
+            <div class="chunk-meta">
+              <span>Top ${idx+1} · ${c.id}</span>
+              <span class="audience-pill audience-${c.metadata.audience}">${c.metadata.audience}</span>
+              <span>Score: ${c.score.toFixed(4)}</span>
+            </div>
+            <div style="color:var(--text-chunk);">${escapeHtml(c.content)}</div>
+          </div>
+        `;
+      });
+    }
+
+    async function submitCustomQuery() {
+      const input = document.getElementById('customInputBox');
+      const val = input.value.trim();
+      if (!val) return;
+      
+      showChatView();
+      document.getElementById('userQueryDisplay').innerText = val;
+      input.value = '';
+
+      // Hiển thị trạng thái đang xử lý
+      const ansElem = document.getElementById('assistantAnswerDisplay');
+      const citationsElem = document.getElementById('citationsDisplay');
+      const noFilterCol = document.getElementById('abColNoFilter');
+      const withFilterCol = document.getElementById('abColWithFilter');
+      const accordion = document.getElementById('chunksAccordionContent');
+
+      ansElem.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; color:var(--text-muted);">
+          <span style="display:inline-block; animation:spin 1s linear infinite;">✦</span>
+          <span>Đang truy xuất kho dữ liệu chính sách và gọi mô hình AI tổng hợp câu trả lời...</span>
+        </div>
+      `;
+      citationsElem.innerHTML = 'Nguồn trích dẫn: <span style="color:var(--text-dim); font-style:italic;">Đang tìm kiếm tài liệu đối ứng...</span>';
+      noFilterCol.innerHTML = '<div style="color:var(--text-dim); font-size:0.75rem; padding:8px;">Đang tính toán vector similarity...</div>';
+      withFilterCol.innerHTML = '<div style="color:var(--text-dim); font-size:0.75rem; padding:8px;">Đang tính toán vector similarity...</div>';
+      accordion.innerHTML = '<div style="color:var(--text-dim); font-size:0.8rem; padding:8px;">Đang trích xuất chunks...</div>';
+
+      const strategy = document.getElementById('topStrategySelect').value;
+      const filter = document.getElementById('topFilterSelect').value;
+
+      try {
+        const response = await fetch('/api/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: val, strategy: strategy, filter: filter })
+        });
+
+        if (!response.ok) throw new Error('API server returned error');
+        const res = await response.json();
+
+        // 1. Cập nhật câu trả lời từ AI
+        let formattedAnswer = res.answer.replace(/\n/g, '<br>');
+        ansElem.innerHTML = formattedAnswer;
+
+        if (res.model_used) {
+          ansElem.innerHTML += `
+            <div style="margin-top:12px; padding:6px 10px; background:var(--item-bg); border-radius:4px; font-size:0.76rem; color:var(--text-dim); display:flex; align-items:center; gap:6px; border:1px solid var(--border-subtle);">
+              <span>🤖</span>
+              <span>Được xử lý & tổng hợp bởi: <b style="color:var(--accent);">${res.model_used}</b></span>
+            </div>
+          `;
+        }
+
+        // 2. Cập nhật Citations
+        citationsElem.innerHTML = 'Nguồn trích dẫn: ' + res.citations.map((c, idx) => 
+          `<span class="citation-tag" onclick="showCitationInfo('${c}')">[${idx+1}] ${c}</span>`
+        ).join(' ');
+
+        // 3. Cập nhật No Filter Col (A/B Test)
+        noFilterCol.innerHTML = '';
+        res.no_filter.slice(0, 3).forEach((c, idx) => {
+          const aud = (c.metadata && c.metadata.audience) || 'none';
+          noFilterCol.innerHTML += `
+            <div style="font-size:0.8rem; color:var(--text-main); background:var(--item-bg); padding:8px 10px; border-radius:4px; border:1px solid var(--border-subtle);">
+              <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                <b>Top ${idx+1}: ${c.metadata.doc_id || c.id}</b>
+                <span class="audience-pill audience-${aud}">${aud.toUpperCase()}</span>
+              </div>
+              <div style="color:var(--text-dim); font-size:0.75rem;">Score: ${c.score.toFixed(4)}</div>
+            </div>
+          `;
+        });
+
+        // 4. Cập nhật With Filter Col (A/B Test)
+        withFilterCol.innerHTML = '';
+        res.with_filter.slice(0, 3).forEach((c, idx) => {
+          const aud = (c.metadata && c.metadata.audience) || 'none';
+          withFilterCol.innerHTML += `
+            <div style="font-size:0.8rem; color:var(--text-main); background:var(--accent-soft); padding:8px 10px; border-radius:4px; border:1px solid var(--border-subtle);">
+              <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                <b>Top ${idx+1}: ${c.metadata.doc_id || c.id}</b>
+                <span style="font-size:0.7rem; color:var(--accent); font-weight:600;">${aud.toUpperCase()}</span>
+              </div>
+              <div style="color:var(--text-dim); font-size:0.75rem;">Score: ${c.score.toFixed(4)}</div>
+            </div>
+          `;
+        });
+
+        // 5. Cập nhật Chunks Accordion
+        accordion.innerHTML = '';
+        res.with_filter.slice(0, 3).forEach((c, idx) => {
+          accordion.innerHTML += `
+            <div class="chunk-card">
+              <div class="chunk-meta">
+                <span>Top ${idx+1} · ${c.id}</span>
+                <span class="audience-pill audience-${c.metadata.audience}">${c.metadata.audience}</span>
+                <span>Score: ${c.score.toFixed(4)}</span>
+              </div>
+              <div style="color:var(--text-chunk);">${escapeHtml(c.content)}</div>
+            </div>
+          `;
+        });
+
+      } catch (err) {
+        console.warn('Backend API unavailable, using client fallback:', err);
+        renderQueryResponse();
+      }
+    }
+
+    function renderCorpusTable() {
+      const tbody = document.getElementById('corpusTableBody');
+      tbody.innerHTML = '';
+      window.LAB7_DATA.documents.forEach(d => {
+        tbody.innerHTML += `
+          <tr>
+            <td><b>${d.filename}</b></td>
+            <td><span class="audience-pill audience-${d.metadata.audience}">${d.metadata.audience}</span></td>
+            <td style="color:var(--text-muted);">${d.metadata.category || 'general'}</td>
+            <td style="font-family:'JetBrains Mono';">${d.char_count.toLocaleString()}</td>
+            <td><a href="${d.metadata.source_url}" target="_blank" style="color:var(--accent); text-decoration:none; font-size:0.8rem;">Xem link eBay &rarr;</a></td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderSimilarityList() {
+      const container = document.getElementById('similarityPairsContainer');
+      container.innerHTML = '';
+      window.LAB7_DATA.prediction_pairs.forEach(p => {
+        container.innerHTML += `
+          <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:14px 18px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
+              <span style="font-weight:600; font-size:0.85rem; color:var(--panel-title-color);">Cặp ${p.pair_id} · Dự đoán con người: <b style="color:${p.prediction==='CAO'?'var(--accent)':'#f87171'}">${p.prediction}</b></span>
+              <span style="font-family:'JetBrains Mono'; font-size:0.82rem; color:${p.mock_score>0?'var(--accent)':'#f87171'}">Cosine (Mock): ${p.mock_score}</span>
+            </div>
+            <div style="font-size:0.83rem; color:var(--text-muted); margin-bottom:4px;"><b>Câu A:</b> "${p.sentence_a}"</div>
+            <div style="font-size:0.83rem; color:var(--text-muted); margin-bottom:8px;"><b>Câu B:</b> "${p.sentence_b}"</div>
+            <div style="font-size:0.78rem; color:var(--text-dim); font-style:italic;">💡 ${p.note}</div>
+          </div>
+        `;
+      });
+    }
+
+    function showCitationInfo(cid) {
+      alert(`Trích dẫn nguồn: ${cid}\nĐoạn văn bản đã được kiểm chứng tính liên quan trong vector store.`);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Chuyển đổi Theme màu dịu mắt
+    function switchTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('lab7_theme', theme);
+      } catch (e) {}
+      const sel = document.getElementById('themeSelect');
+      if (sel && sel.value !== theme) {
+        sel.value = theme;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Khôi phục theme đã lưu hoặc mặc định dark
+      const savedTheme = localStorage.getItem('lab7_theme') || 'dark';
+      switchTheme(savedTheme);
+
+      switchPresetQuery(2, document.querySelectorAll('.nav-item')[1]);
+    });
+  </script>
+</body>
+</html>

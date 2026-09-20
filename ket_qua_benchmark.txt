@@ -1,0 +1,57 @@
+BENCHMARK RESULTS — MarkdownHeadingChunker
+
+Total Chunks: 126
+
+
+=== Q1: How many business days does a seller have to respond to a return or item not received request before eBay can step in? ===
+Filter: None
+Gold Doc: ebay-seller-ask-ebay-step-in
+Status: MISSING
+  Top-1 [Score: 0.2560] ebay-seller-protections (id=ebay-seller-protections#6): ## An item is returned after it was used or damaged by the buyer If you accepted a buyer's return request but the item i...
+  Top-2 [Score: 0.2343] ebay-seller-return-policy (id=ebay-seller-return-policy#8): ## Setting your return approval and refund rules Changes to your return rules will automatically apply to all future ret...
+  Top-3 [Score: 0.2299] ebay-seller-protections (id=ebay-seller-protections#43): ## Abusive buying activity eBay Guaranteed Fit  When a buyer opens a return for a vehicle part or accessory covered by e...
+
+=== Q2: Can an order return be requested if the listing specifies that returns are not accepted? ===
+Filter: {'audience': 'buyer'}
+Gold Doc: ebay-buyer-returns-refunds
+Status: MISSING
+  Top-1 [Score: 0.4300] ebay-buyer-cancel-order (id=ebay-buyer-cancel-order#0): # Hủy đơn hàng dành cho người mua If you’ve changed your mind about a purchase, you may be able to submit a request to c...
+  Top-2 [Score: 0.2093] ebay-buyer-cancel-order (id=ebay-buyer-cancel-order#3): ## Cancel an order Select the More actions dropdown menu and select Cancel this order.  If you don't see the Cancel this...
+  Top-3 [Score: 0.1711] ebay-buyer-cancel-order (id=ebay-buyer-cancel-order#4): ## Cancel an order We'll send your request to the seller and ask them to accept or decline the cancellation within 3 cal...
+
+=== Q3: What percentage can be deducted from a refund if an item is returned damaged or used? ===
+Filter: {'audience': 'seller'}
+Gold Doc: ebay-seller-protections
+Status: RELEVANT
+  Top-1 [Score: 0.4109] ebay-seller-protections (id=ebay-seller-protections#14): ## Abusive buying activity Sellers who are not Below Standard are eligible for this protection for listings that offer f...
+  Top-2 [Score: 0.2580] ebay-seller-protections (id=ebay-seller-protections#5): ## A buyer falsely claims an item was not as described The return won't be counted in your "Not as described" rate in se...
+  Top-3 [Score: 0.2530] ebay-seller-protections (id=ebay-seller-protections#2): # Cơ chế bảo vệ người bán eBay We will protect you by removing negative and neutral feedback and defects when things hap...
+
+=== Q4: What are the steps for a buyer to report that an item has not arrived through My eBay? ===
+Filter: {'audience': 'buyer'}
+Gold Doc: ebay-buyer-item-not-received
+Status: PARTIAL
+  Top-1 [Score: 0.2878] ebay-buyer-returns-refunds (id=ebay-buyer-returns-refunds#9): ## If the seller wasn't able to help, ask eBay to step in  Most of the time sellers will be able to resolve your issue, ...
+  Top-2 [Score: 0.2512] ebay-buyer-returns-refunds (id=ebay-buyer-returns-refunds#2): ## Let the seller know by opening a request  If you want to return an item, or if something's gone wrong with your order...
+  Top-3 [Score: 0.2395] ebay-buyer-item-not-received (id=ebay-buyer-item-not-received#12): ## Ask eBay to step in and help If you don't agree with our resolution, you can appeal by providing new information with...
+
+=== Q5: What are the return policy duration options that a seller can choose to offer on eBay? ===
+Filter: {'audience': 'seller'}
+Gold Doc: ebay-seller-return-policy
+Status: MISSING
+  Top-1 [Score: 0.3802] ebay-seller-protections (id=ebay-seller-protections#14): ## Abusive buying activity Sellers who are not Below Standard are eligible for this protection for listings that offer f...
+  Top-2 [Score: 0.3332] ebay-seller-protections (id=ebay-seller-protections#25): ## Abusive buying activity When you use eBay International Shipping, you're responsible for sending the item your buyer ...
+  Top-3 [Score: 0.2250] ebay-seller-protections (id=ebay-seller-protections#44): ## Abusive buying activity Protections for payment disputes  If a buyer files a payment dispute and the transaction is e...
+
+============================================================
+A/B TEST FOR Q2 (METADATA FILTERING)
+============================================================
+[filter=None (No filter)]:
+  Top-1: Doc=ebay-buyer-cancel-order (Audience=buyer) Score=0.4300
+  Top-2: Doc=ebay-seller-ask-ebay-step-in (Audience=seller) Score=0.3745
+  Top-3: Doc=ebay-seller-ask-ebay-step-in (Audience=seller) Score=0.2686
+
+[filter={'audience': 'buyer'} (With filter)]:
+  Top-1: Doc=ebay-buyer-cancel-order (Audience=buyer) Score=0.4300
+  Top-2: Doc=ebay-buyer-cancel-order (Audience=buyer) Score=0.2093
+  Top-3: Doc=ebay-buyer-cancel-order (Audience=buyer) Score=0.1711
